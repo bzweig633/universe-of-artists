@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Artist Network</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="/universe-of-artists/assets/index-C6rl-Gbu.js"></script>
+  <link rel="stylesheet" crossorigin href="/universe-of-artists/assets/index-CYrXg2VM.css">
+</head>
+<body>
+  <div id="app">
+    <header id="header">
+      <div class="header-inner">
+        <div class="header-title">
+          <span class="title-main">A Universe of Artists (according to Wikidata)</span>
+          <span class="title-sub" id="data-stats">Loading…</span>
+        </div>
+        <div class="header-right">
+          <div id="node-info" class="node-info" aria-live="polite">
+            <span class="node-name" id="info-name">Hover a node</span>
+            <span class="node-meta" id="info-meta"></span>
+          </div>
+          <div class="loading-badge" id="loading-badge">
+            <span class="loading-dot"></span>
+            Loading
+          </div>
+        </div>
+        <span class="made-by">Made by <a href="https://bzweig633.github.io" target="_blank" rel="noopener noreferrer">Benjamin Zweig</a></span>
+      </div>
+    </header>
+
+    
+    <nav id="layout-nav" aria-label="Graph layout">
+      <button class="layout-btn active" data-layout="force"    aria-pressed="true">Force</button>
+      <button class="layout-btn"        data-layout="clusters" aria-pressed="false">Clusters</button>
+      <button class="layout-btn"        data-layout="radial"   aria-pressed="false">Radial by century</button>
+      <button class="layout-btn"        data-layout="worm"     aria-pressed="false">Worm</button>
+      <button class="layout-btn"        data-layout="mesh"     aria-pressed="false">Mesh</button>
+    </nav>
+
+    <main id="canvas-wrap">
+      <div id="graph-container"></div>
+      <div id="node-tooltip" role="tooltip" aria-hidden="true">
+        <div class="tt-name"></div>
+        <div class="tt-meta"></div>
+        <div class="tt-neighbors"></div>
+      </div>
+      
+      <!-- Collapse toggle — sits at the edge of the panel, visible when panel is open or closed -->
+      <button id="panel-toggle" aria-label="Toggle controls" aria-expanded="true" title="Toggle panel">
+        <svg viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </main>
+
+    <aside id="controls-panel">
+      <!-- SEARCH -->
+      <div class="control-section-label first">Search</div>
+      <div class="search-wrap" id="search-wrap">
+        <svg class="search-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <input id="search-input" type="text" placeholder="Search artist…" autocomplete="off" spellcheck="false" />
+        <button id="search-clear" aria-label="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="control-section-label">Filters</div>
+      <div class="discipline-wrap" id="discipline-wrap">
+        <button id="disc-btn" class="disc-btn" aria-haspopup="listbox" aria-expanded="false">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="4" cy="4" r="2" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="12" cy="4" r="2" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/>
+          </svg>
+          <span id="disc-label">All artists</span>
+          <svg class="disc-caret" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div id="disc-panel" role="listbox" hidden>
+          <div class="d-item selected" data-discipline="all">       <span class="d-name">All artists</span> <span class="d-count" id="d-count-all"></span></div>
+          <div class="d-item"          data-discipline="painter">   <span class="d-name">Painters</span>   <span class="d-count" id="d-count-painter"></span></div>
+          <div class="d-item"          data-discipline="sculptor">  <span class="d-name">Sculptors</span>  <span class="d-count" id="d-count-sculptor"></span></div>
+          <div class="d-item"          data-discipline="architect"> <span class="d-name">Architects</span> <span class="d-count" id="d-count-architect"></span></div>
+        </div>
+      </div>
+
+      <div class="filter-wrap" id="filter-wrap">
+        <button id="filter-btn" class="filter-btn" aria-haspopup="listbox" aria-expanded="false">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <span id="filter-label">All movements</span>
+          <svg class="filter-caret" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div id="filter-panel" role="listbox" hidden>
+          <input id="filter-search" type="text" placeholder="Filter movements…" autocomplete="off" />
+          <div id="filter-list"></div>
+        </div>
+      </div>
+
+      <!-- SIMULATION -->
+      <div class="control-section-label">Simulation</div>
+      <div class="sim-btns">
+        <button class="sim-btn" id="btn-pause" title="Pause or resume simulation">⏸ Pause</button>
+      </div>
+
+      <!-- NODES -->
+      <div class="control-section-label">Nodes</div>
+      <div class="control-row">
+        <label for="ctrl-node-scale">Node scale</label>
+        <input id="ctrl-node-scale" type="range" min="25" max="400" value="100" step="5" />
+        <span id="val-node-scale" class="val">1.0×</span>
+      </div>
+      <div class="control-row toggle-row">
+        <label for="ctrl-labels">Labels on hover</label>
+        <button id="ctrl-labels" class="toggle-btn" aria-pressed="false">Off</button>
+      </div>
+
+      <!-- LINKS -->
+      <div class="control-section-label">Links</div>
+      <div class="control-row">
+        <label for="ctrl-style">Style</label>
+        <select id="ctrl-style">
+          <option value="curved" selected>Curved</option>
+          <option value="straight">Straight</option>
+          <option value="off">Hidden</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label for="ctrl-repulsion">Repulsion</label>
+        <input id="ctrl-repulsion" type="range" min="5" max="100" value="35" step="1" />
+        <span id="val-repulsion" class="val">0.35</span>
+      </div>
+
+      <button id="btn-reset">Reset view</button>
+    </aside>
+
+    <!-- Search results dropdown — positioned by JS using #search-wrap rect -->
+    <div id="search-results" role="listbox" aria-label="Search results" hidden></div>
+
+    <div id="legend" aria-label="Legend"></div>
+  </div>
+
+</body>
+</html>
